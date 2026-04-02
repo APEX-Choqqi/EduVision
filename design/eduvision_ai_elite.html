@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduVision AI Elite - Full System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1; --student: #0ea5e9; --success: #10b981;
+            --warning: #f59e0b; --danger: #ef4444; --bg: #020617; --card: #1e293b; --text: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text); overflow: hidden; }
+
+        .phone {
+            width: 375px; height: 812px; background: var(--bg);
+            border-radius: 50px; border: 12px solid #334155;
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.8);
+        }
+
+        .screen { position: absolute; inset: 0; display: none; flex-direction: column; padding: 20px; overflow-y: auto; scrollbar-width: none; z-index: 10; padding-bottom: 100px; }
+        .screen.active { display: flex; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* WELCOME */
+        .intro-content { text-align: center; margin-top: 80px; }
+        .role-selector { margin-top: 60px; }
+        .role-card {
+            background: var(--card); padding: 25px; border-radius: 28px; margin-bottom: 20px;
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s;
+            display: flex; align-items: center; gap: 20px;
+        }
+        .role-card:hover { border-color: var(--primary); background: rgba(99,102,241,0.1); transform: translateY(-5px); }
+        .role-icon { width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+
+        /* TEACHER */
+        .t-header { background: linear-gradient(180deg, #1e1b4b 0%, var(--bg) 100%); margin: -20px -20px 20px; padding: 50px 25px 30px; border-radius: 0 0 40px 40px; }
+        .stat-row { display: flex; gap: 12px; margin-bottom: 20px; }
+        .stat-item { background: var(--card); padding: 15px; border-radius: 20px; flex: 1; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* STUDENT */
+        .s-header { text-align: center; padding: 40px 0; background: radial-gradient(circle at top, rgba(14,165,233,0.2), transparent); }
+        .score-circle { width: 150px; height: 150px; border-radius: 50%; border: 8px solid rgba(14,165,233,0.1); border-top-color: var(--student); margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; animation: rotateBorder 3s linear infinite; }
+        @keyframes rotateBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .score-inner { position: absolute; display: flex; flex-direction: column; align-items: center; }
+        .score-circle::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 8px solid transparent; border-bottom-color: var(--student); opacity: 0.3; transform: rotate(45deg); }
+
+        /* CARDS & COMPONENTS */
+        .card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .ai-label { background: linear-gradient(90deg, var(--primary), #a855f7); color: white; padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; display: inline-block; margin-bottom: 10px; text-transform: uppercase; }
+        .btn-action { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 20px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; font-size: 14px; }
+        .btn-action:active { transform: scale(0.96); }
+        .btn-sm { padding: 10px; font-size: 12px; border-radius: 14px; }
+
+        /* PROGRESS BARS */
+        .prog-bar { height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin-top: 6px; }
+        .prog-fill { height: 100%; border-radius: 10px; transition: width 1s ease-out; }
+
+        /* SCANNER MODAL */
+        #scanner-modal { position: absolute; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; }
+        .scan-window { flex: 1; border: 2px solid var(--primary); margin: 80px 30px 20px; border-radius: 30px; position: relative; overflow: hidden; box-shadow: 0 0 0 2000px rgba(0,0,0,0.85); }
+        .scan-line { width: 100%; height: 4px; background: var(--primary); position: absolute; top: 0; box-shadow: 0 0 20px var(--primary); animation: scanLoop 2.5s infinite linear; }
+        @keyframes scanLoop { 0% { top: 0; } 100% { top: 100%; } }
+        .scan-progress { margin: 0 30px 10px; }
+        .scan-prog-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .scan-prog-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.1s linear; }
+
+        /* RESULT MODAL */
+        #result-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000; display: none; flex-direction: column; justify-content: flex-end; }
+        .result-sheet { background: #0f172a; border-radius: 40px 40px 0 0; padding: 30px 25px 50px; animation: sheetUp 0.4s ease-out; }
+        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .result-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        /* DIAGNOSTIKA MODAL */
+        #diag-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000; display: none; flex-direction: column; justify-content: flex-end; }
+        .diag-sheet { background: #0f172a; border-radius: 40px 40px 0 0; padding: 30px 25px 50px; animation: sheetUp 0.4s ease-out; max-height: 85%; overflow-y: auto; scrollbar-width: none; }
+        .topic-bar { margin-bottom: 14px; }
+        .topic-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+
+        /* TELEGRAM TOAST */
+        #tg-toast { position: absolute; top: 60px; left: 20px; right: 20px; background: #0088cc; border-radius: 16px; padding: 14px 18px; display: none; align-items: center; gap: 12px; z-index: 3000; animation: toastIn 0.3s ease-out; }
+        @keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* OTM DETAIL MODAL */
+        #otm-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000; display: none; flex-direction: column; justify-content: flex-end; }
+        .otm-sheet { background: #0f172a; border-radius: 40px 40px 0 0; padding: 30px 25px 50px; animation: sheetUp 0.4s ease-out; }
+        .otm-badge { display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 10px; font-weight: 700; }
+
+        /* HISTORY ITEMS */
+        .hist-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hist-icon { width: 40px; height: 40px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+
+        /* NAV */
+        .nav-bar { position: absolute; bottom: 0; width: 100%; height: 85px; background: rgba(15,23,42,0.95); backdrop-filter: blur(15px); display: none; justify-content: space-around; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; z-index: 100; }
+        .nav-tab { color: #64748b; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: 0.2s; }
+        .nav-tab.active { color: var(--primary); }
+
+        /* BADGE */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 700; }
+        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-danger  { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        /* PULSE DOT */
+        .pulse-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(16,185,129,0.5); } 50%{ box-shadow: 0 0 0 5px rgba(16,185,129,0); } }
+
+        /* TUTOR SCREEN */
+        #scr-tutor .question-card { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 20px; padding: 18px; margin-bottom: 12px; }
+        .option-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 16px; width: 100%; text-align: left; color: var(--text); cursor: pointer; font-size: 13px; margin-bottom: 8px; transition: 0.2s; }
+        .option-btn:hover { background: rgba(99,102,241,0.15); border-color: var(--primary); }
+        .option-btn.correct { background: rgba(16,185,129,0.15); border-color: var(--success); }
+        .option-btn.wrong   { background: rgba(239,68,68,0.1); border-color: var(--danger); }
+    </style>
+</head>
+<body>
+<div class="phone">
+
+    <!-- ====== INTRO ====== -->
+    <div id="scr-intro" class="screen active">
+        <div class="intro-content">
+            <div style="width:70px;height:70px;background:rgba(99,102,241,0.15);border-radius:24px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:28px;">🎓</div>
+            <h1 style="font-size:40px;font-weight:900;letter-spacing:-1.5px;">Edu<span style="color:var(--primary)">Vision</span></h1>
+            <p style="color:#64748b;margin-top:10px;font-size:13px;">Intellektual ta'lim boshqaruv tizimi</p>
+            <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                <span class="badge badge-success"><span class="pulse-dot"></span>AI Faol</span>
+                <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--primary);">v2.4 Elite</span>
+            </div>
+        </div>
+        <div class="role-selector">
+            <div class="role-card" onclick="app.init('teacher')">
+                <div class="role-icon" style="background:rgba(99,102,241,0.1);color:var(--primary);"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div>
+                    <b>Ustoz Kabineti</b>
+                    <p style="font-size:11px;color:#64748b;margin-top:2px;">Skanerlash, Guruh Analitikasi, Hisobot</p>
+                </div>
+                <i class="fas fa-chevron-right" style="color:#334155;margin-left:auto;"></i>
+            </div>
+            <div class="role-card" onclick="app.init('student')">
+                <div class="role-icon" style="background:rgba(14,165,233,0.1);color:var(--student);"><i class="fas fa-user-graduate"></i></div>
+                <div>
+                    <b>O'quvchi Kabineti</b>
+                    <p style="font-size:11px;color:#64748b;margin-top:2px;">Natijalar, OTM Bashorati, AI Mentor</p>
+                </div>
+                <i class="fas fa-chevron-right" style="color:#334155;margin-left:auto;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== TEACHER ====== -->
+    <div id="scr-teacher" class="screen">
+        <div class="t-header">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <p style="font-size:12px;color:#6366f1;font-weight:600;letter-spacing:1px;text-transform:uppercase;">USTOZ KABINETI</p>
+                    <h2 style="font-size:24px;margin-top:4px;">Sinf Monitoringi</h2>
+                    <p style="color:#94a3b8;font-size:13px;margin-top:2px;">11-A · Matematika yo'nalishi</p>
+                </div>
+                <div style="width:42px;height:42px;background:rgba(99,102,241,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="app.showTgToast()">
+                    <i class="fab fa-telegram" style="color:#0088cc;font-size:18px;"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-item">
+                <p style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">KPI O'sish</p>
+                <h3 style="color:var(--success);font-size:22px;margin-top:4px;">+14.5%</h3>
+                <p style="font-size:10px;color:#64748b;margin-top:2px;">↑ o'tgan oyga</p>
+            </div>
+            <div class="stat-item">
+                <p style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Faol O'quvchi</p>
+                <h3 style="font-size:22px;margin-top:4px;">28<span style="font-size:14px;color:#64748b;">/32</span></h3>
+                <p style="font-size:10px;color:#64748b;margin-top:2px;">87.5% davomat</p>
+            </div>
+            <div class="stat-item">
+                <p style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">O'rt. Ball</p>
+                <h3 style="font-size:22px;margin-top:4px;color:var(--warning);">154.8</h3>
+                <p style="font-size:10px;color:#64748b;margin-top:2px;">DTM format</p>
+            </div>
+        </div>
+
+        <div class="card" style="border-left:5px solid var(--primary);cursor:pointer;" onclick="app.showDiag()">
+            <div class="ai-label">AI Recommendation</div>
+            <p style="font-size:12px;line-height:1.6;">Guruhda <b>Logarifmik tenglamalar</b> mavzusida 70% o'quvchi xato qildi. Batafsil ko'rish uchun bosing.</p>
+            <div style="margin-top:12px;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span>Logarifm</span><span style="color:var(--danger);">70% xato</span></div>
+                <div class="prog-bar"><div class="prog-fill" style="width:70%;background:var(--danger);"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;margin-top:8px;"><span>Trigonometriya</span><span style="color:var(--warning);">45% xato</span></div>
+                <div class="prog-bar"><div class="prog-fill" style="width:45%;background:var(--warning);"></div></div>
+            </div>
+            <p style="font-size:10px;color:var(--primary);margin-top:10px;">Batafsil diagnostika → <i class="fas fa-arrow-right" style="font-size:10px;"></i></p>
+        </div>
+
+        <!-- So'nggi testlar -->
+        <div class="card">
+            <p style="font-size:12px;font-weight:700;margin-bottom:12px;">So'nggi Skanerlangan Testlar</p>
+            <div class="hist-item">
+                <div class="hist-icon" style="background:rgba(16,185,129,0.1);color:var(--success);"><i class="fas fa-check"></i></div>
+                <div style="flex:1;">
+                    <p style="font-size:12px;font-weight:600;">Matematika – 15-dars</p>
+                    <p style="font-size:10px;color:#64748b;">32 nafar · Bugun 10:30</p>
+                </div>
+                <span class="badge badge-success">O'tdi</span>
+            </div>
+            <div class="hist-item">
+                <div class="hist-icon" style="background:rgba(245,158,11,0.1);color:var(--warning);"><i class="fas fa-exclamation"></i></div>
+                <div style="flex:1;">
+                    <p style="font-size:12px;font-weight:600;">Fizika – 12-dars</p>
+                    <p style="font-size:10px;color:#64748b;">30 nafar · Kecha 14:15</p>
+                </div>
+                <span class="badge badge-warning">Zaif</span>
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="app.openScanner()"><i class="fas fa-expand"></i> Yangi Testni Skanerlash</button>
+        <button class="btn-action" style="background:#0088cc;margin-top:12px;" onclick="app.showTgToast()"><i class="fab fa-telegram"></i> Parent-Sync (Ommaviy)</button>
+    </div>
+
+    <!-- ====== STUDENT ====== -->
+    <div id="scr-student" class="screen">
+        <div class="s-header">
+            <div style="position:relative;width:150px;height:150px;margin:0 auto;">
+                <div class="score-circle"></div>
+                <div class="score-inner" style="inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;">
+                    <span style="font-size:32px;font-weight:800;">182.5</span>
+                    <span style="font-size:11px;color:#64748b;">JORIY BALL</span>
+                </div>
+            </div>
+            <p style="margin-top:15px;font-weight:700;font-size:18px;">Avazbek Isoqjonov</p>
+            <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;">
+                <span class="badge badge-success">Top 15%</span>
+                <span class="badge" style="background:rgba(14,165,233,0.1);color:var(--student);">11-A sinf</span>
+            </div>
+        </div>
+
+        <!-- OTM Matcher -->
+        <div class="card" style="cursor:pointer;" onclick="app.showOtm()">
+            <div class="ai-label">OTM Matcher (AI Prediction)</div>
+            <div style="margin-top:12px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                    <span>TATU · Kompyuter injiniringi</span>
+                    <span style="color:var(--success);font-weight:700;">94%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:94%;background:var(--success);"></div></div>
+            </div>
+            <div style="margin-top:15px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                    <span>Inha · Computer Science</span>
+                    <span style="color:var(--warning);font-weight:700;">68%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:68%;background:var(--warning);"></div></div>
+            </div>
+            <div style="margin-top:15px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                    <span>TDTU · Dasturiy injiniring</span>
+                    <span style="color:var(--primary);font-weight:700;">82%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:82%;background:var(--primary);"></div></div>
+            </div>
+            <p style="font-size:10px;color:var(--primary);margin-top:12px;">Barcha 12 ta OTM ko'rish → <i class="fas fa-arrow-right" style="font-size:10px;"></i></p>
+        </div>
+
+        <!-- AI Mentor -->
+        <div class="card" style="background:rgba(245,158,11,0.08);border:1px dashed var(--warning);">
+            <h4 style="color:var(--warning);font-size:14px;"><i class="fas fa-brain"></i> AI Mentor</h4>
+            <p style="font-size:11px;margin-top:8px;line-height:1.5;color:#fbbf24;">
+                Sizda <b>Stereometriya</b> bo'yicha bo'shliq aniqlandi. AI siz uchun 5 daqiqalik dars va 3 ta test generatsiya qildi.
+            </p>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+                <button class="btn-action btn-sm" style="background:var(--warning);color:#000;flex:1;" onclick="app.openTutor()">
+                    <i class="fas fa-play"></i> Darsni boshlash
+                </button>
+                <button class="btn-action btn-sm" style="background:rgba(255,255,255,0.05);flex:0 0 auto;width:44px;padding:0;">
+                    <i class="fas fa-bookmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- So'nggi natijalar -->
+        <div class="card">
+            <p style="font-size:12px;font-weight:700;margin-bottom:12px;">Oxirgi Natijalar</p>
+            <div class="hist-item">
+                <div class="hist-icon" style="background:rgba(16,185,129,0.1);color:var(--success);"><i class="fas fa-calculator"></i></div>
+                <div style="flex:1;">
+                    <p style="font-size:12px;font-weight:600;">Matematika</p>
+                    <p style="font-size:10px;color:#64748b;">Bugun · 30 savol</p>
+                </div>
+                <div style="text-align:right;">
+                    <p style="font-size:14px;font-weight:700;color:var(--success);">26/30</p>
+                    <p style="font-size:10px;color:#64748b;">87%</p>
+                </div>
+            </div>
+            <div class="hist-item">
+                <div class="hist-icon" style="background:rgba(99,102,241,0.1);color:var(--primary);"><i class="fas fa-atom"></i></div>
+                <div style="flex:1;">
+                    <p style="font-size:12px;font-weight:600;">Fizika</p>
+                    <p style="font-size:10px;color:#64748b;">Kecha · 30 savol</p>
+                </div>
+                <div style="text-align:right;">
+                    <p style="font-size:14px;font-weight:700;color:var(--warning);">21/30</p>
+                    <p style="font-size:10px;color:#64748b;">70%</p>
+                </div>
+            </div>
+            <div class="hist-item" style="border-bottom:none;">
+                <div class="hist-icon" style="background:rgba(14,165,233,0.1);color:var(--student);"><i class="fas fa-flask"></i></div>
+                <div style="flex:1;">
+                    <p style="font-size:12px;font-weight:600;">Kimyo</p>
+                    <p style="font-size:10px;color:#64748b;">2 kun avval · 30 savol</p>
+                </div>
+                <div style="text-align:right;">
+                    <p style="font-size:14px;font-weight:700;color:var(--success);">25/30</p>
+                    <p style="font-size:10px;color:#64748b;">83%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== TUTOR SCREEN ====== -->
+    <div id="scr-tutor" class="screen">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+            <button onclick="app.init(app.role)" style="background:rgba(255,255,255,0.05);border:none;width:38px;height:38px;border-radius:12px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div>
+                <p style="font-size:12px;color:#64748b;">AI Mentor</p>
+                <h3 style="font-size:16px;">Stereometriya Mashqi</h3>
+            </div>
+            <span class="badge badge-warning" style="margin-left:auto;">3/3 savol</span>
+        </div>
+
+        <div class="question-card">
+            <p style="font-size:10px;color:var(--primary);font-weight:700;margin-bottom:8px;">SAVOL 1</p>
+            <p style="font-size:13px;line-height:1.6;">Kubning hajmi 27 sm³ bo'lsa, uning qirra uzunligi necha sm?</p>
+        </div>
+        <button class="option-btn" onclick="app.checkAnswer(this, false)">A) 9 sm</button>
+        <button class="option-btn" onclick="app.checkAnswer(this, true)">B) 3 sm</button>
+        <button class="option-btn" onclick="app.checkAnswer(this, false)">C) 6 sm</button>
+        <button class="option-btn" onclick="app.checkAnswer(this, false)">D) 4 sm</button>
+
+        <div id="answer-feedback" style="display:none;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:16px;padding:14px;margin-top:8px;">
+            <p style="font-size:12px;color:var(--success);font-weight:700;"><i class="fas fa-check-circle"></i> To'g'ri javob!</p>
+            <p style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5;">V = a³ bo'lgani uchun, a = ∛27 = 3 sm. Kub hajmining kub ildizi = qirra uzunligi.</p>
+        </div>
+
+        <button id="next-btn" class="btn-action" style="display:none;margin-top:14px;" onclick="app.nextQuestion()">
+            <i class="fas fa-arrow-right"></i> Keyingi savol
+        </button>
+    </div>
+
+    <!-- ====== SCANNER MODAL ====== -->
+    <div id="scanner-modal">
+        <div style="padding:50px 30px 20px;display:flex;align-items:center;gap:12px;">
+            <button onclick="app.closeScanner()" style="background:rgba(255,255,255,0.08);border:none;width:38px;height:38px;border-radius:12px;color:var(--text);cursor:pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+            <div>
+                <p style="font-size:13px;font-weight:700;">AI Skaner</p>
+                <p id="scan-status" style="font-size:11px;color:#64748b;">Varaqani ramkaga joylashtiring</p>
+            </div>
+        </div>
+        <div class="scan-window">
+            <div class="scan-line"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                <div id="scan-percent" style="font-size:40px;font-weight:800;color:var(--primary);display:none;">0%</div>
+            </div>
+            <div style="position:absolute;bottom:20px;width:100%;text-align:center;color:rgba(255,255,255,0.4);font-size:10px;font-family:monospace;letter-spacing:2px;" id="cv-status">CV ENGINE ACTIVE: SCANNING...</div>
+        </div>
+        <div class="scan-progress" style="margin:0 30px 10px;">
+            <div class="scan-prog-bar"><div class="scan-prog-fill" id="scan-prog-fill"></div></div>
+        </div>
+        <div style="padding:10px 30px 50px;">
+            <button class="btn-action" style="background:#ef4444;" onclick="app.closeScanner()">
+                <i class="fas fa-times"></i> Bekor qilish
+            </button>
+        </div>
+    </div>
+
+    <!-- ====== RESULT MODAL ====== -->
+    <div id="result-modal">
+        <div class="result-sheet">
+            <div style="text-align:center;margin-bottom:24px;">
+                <div style="width:60px;height:60px;background:rgba(16,185,129,0.15);border-radius:20px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:24px;">✅</div>
+                <h3 style="font-size:20px;">Skanerlash Yakunlandi</h3>
+                <p style="font-size:12px;color:#64748b;margin-top:4px;">OpenCV AI · 32 varaq tahlil qilindi</p>
+            </div>
+            <div class="result-item">
+                <p style="font-size:13px;color:#94a3b8;">O'quvchilar soni</p>
+                <b style="font-size:14px;">32 nafar</b>
+            </div>
+            <div class="result-item">
+                <p style="font-size:13px;color:#94a3b8;">O'rtacha ball</p>
+                <b style="font-size:14px;color:var(--warning);">154.8</b>
+            </div>
+            <div class="result-item">
+                <p style="font-size:13px;color:#94a3b8;">Eng yuqori ball</p>
+                <b style="font-size:14px;color:var(--success);">193.2</b>
+            </div>
+            <div class="result-item">
+                <p style="font-size:13px;color:#94a3b8;">Zaif mavzu</p>
+                <b style="font-size:14px;color:var(--danger);">Logarifm (70% xato)</b>
+            </div>
+            <div class="result-item" style="border:none;">
+                <p style="font-size:13px;color:#94a3b8;">Aniqlik darajasi</p>
+                <b style="font-size:14px;color:var(--success);">99.2% ✓</b>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn-action" style="flex:1;" onclick="app.saveResult()">
+                    <i class="fas fa-save"></i> Saqlash
+                </button>
+                <button class="btn-action" style="flex:1;background:#0088cc;" onclick="app.sendTg()">
+                    <i class="fab fa-telegram"></i> Yuborish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== DIAGNOSTIKA MODAL ====== -->
+    <div id="diag-modal">
+        <div class="diag-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 style="font-size:18px;">Mavzu Diagnostikasi</h3>
+                <button onclick="document.getElementById('diag-modal').style.display='none'" style="background:rgba(255,255,255,0.08);border:none;width:34px;height:34px;border-radius:10px;color:var(--text);cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <p style="font-size:12px;color:#64748b;margin-bottom:18px;">11-A sinf · Matematika · So'nggi test natijalari</p>
+
+            <div class="topic-bar">
+                <div class="topic-label"><span>Logarifmik tenglamalar</span><span style="color:var(--danger);font-weight:700;">70%</span></div>
+                <div class="prog-bar" style="height:8px;"><div class="prog-fill" style="width:70%;background:var(--danger);"></div></div>
+                <p style="font-size:10px;color:#64748b;margin-top:4px;">22 nafar o'quvchi xato qildi</p>
+            </div>
+            <div class="topic-bar">
+                <div class="topic-label"><span>Trigonometriya</span><span style="color:var(--warning);font-weight:700;">45%</span></div>
+                <div class="prog-bar" style="height:8px;"><div class="prog-fill" style="width:45%;background:var(--warning);"></div></div>
+                <p style="font-size:10px;color:#64748b;margin-top:4px;">14 nafar o'quvchi xato qildi</p>
+            </div>
+            <div class="topic-bar">
+                <div class="topic-label"><span>Stereometriya</span><span style="color:var(--warning);font-weight:700;">38%</span></div>
+                <div class="prog-bar" style="height:8px;"><div class="prog-fill" style="width:38%;background:var(--warning);"></div></div>
+                <p style="font-size:10px;color:#64748b;margin-top:4px;">12 nafar o'quvchi xato qildi</p>
+            </div>
+            <div class="topic-bar">
+                <div class="topic-label"><span>Integral</span><span style="color:var(--success);font-weight:700;">20%</span></div>
+                <div class="prog-bar" style="height:8px;"><div class="prog-fill" style="width:20%;background:var(--success);"></div></div>
+                <p style="font-size:10px;color:#64748b;margin-top:4px;">6 nafar o'quvchi xato qildi</p>
+            </div>
+            <div class="topic-bar">
+                <div class="topic-label"><span>Differensial hisoblar</span><span style="color:var(--success);font-weight:700;">12%</span></div>
+                <div class="prog-bar" style="height:8px;"><div class="prog-fill" style="width:12%;background:var(--success);"></div></div>
+                <p style="font-size:10px;color:#64748b;margin-top:4px;">4 nafar o'quvchi xato qildi</p>
+            </div>
+
+            <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:14px;margin-top:16px;">
+                <div class="ai-label">AI Tavsiya</div>
+                <p style="font-size:12px;line-height:1.6;margin-top:4px;">Logarifm va Trigonometriya bo'yicha keyingi 2 darsni qayta o'tkazish tavsiya etiladi. AI 32 ta yangi mashq generatsiya qildi.</p>
+            </div>
+
+            <button class="btn-action" style="margin-top:18px;" onclick="document.getElementById('diag-modal').style.display='none'">
+                <i class="fas fa-check"></i> Tushundim
+            </button>
+        </div>
+    </div>
+
+    <!-- ====== OTM MODAL ====== -->
+    <div id="otm-modal">
+        <div class="otm-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 style="font-size:18px;">OTM Bashorati</h3>
+                <button onclick="document.getElementById('otm-modal').style.display='none'" style="background:rgba(255,255,255,0.08);border:none;width:34px;height:34px;border-radius:10px;color:var(--text);cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <p style="font-size:12px;color:#64748b;margin-bottom:18px;">Joriy ballingiz: <b style="color:var(--student);">182.5</b> · 2023-yil ma'lumotlari asosida</p>
+
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:16px;padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><p style="font-size:13px;font-weight:700;">TATU</p><p style="font-size:11px;color:#64748b;">Kompyuter injiniringi · Grant</p></div>
+                        <div style="text-align:right;"><p style="font-size:20px;font-weight:800;color:var(--success);">94%</p><span class="otm-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">Grant imkoniyati</span></div>
+                    </div>
+                    <div style="margin-top:10px;font-size:11px;color:#64748b;">2023 o'tish balli: 179.4 · Farq: <span style="color:var(--success);">+3.1</span></div>
+                </div>
+                <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:16px;padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><p style="font-size:13px;font-weight:700;">TDTU</p><p style="font-size:11px;color:#64748b;">Dasturiy injiniring · Grant</p></div>
+                        <div style="text-align:right;"><p style="font-size:20px;font-weight:800;color:var(--primary);">82%</p><span class="otm-badge" style="background:rgba(99,102,241,0.15);color:var(--primary);">Yuqori ehtimol</span></div>
+                    </div>
+                    <div style="margin-top:10px;font-size:11px;color:#64748b;">2023 o'tish balli: 183.1 · Farq: <span style="color:var(--danger);">-0.6</span></div>
+                </div>
+                <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:16px;padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><p style="font-size:13px;font-weight:700;">Inha University</p><p style="font-size:11px;color:#64748b;">Computer Science · To'lov</p></div>
+                        <div style="text-align:right;"><p style="font-size:20px;font-weight:800;color:var(--warning);">68%</p><span class="otm-badge" style="background:rgba(245,158,11,0.15);color:var(--warning);">O'rta ehtimol</span></div>
+                    </div>
+                    <div style="margin-top:10px;font-size:11px;color:#64748b;">2023 o'tish balli: 189.8 · Farq: <span style="color:var(--danger);">-7.3</span></div>
+                </div>
+            </div>
+
+            <div style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.15);border-radius:16px;padding:14px;margin-top:14px;">
+                <p style="font-size:12px;line-height:1.6;color:#7dd3fc;"><i class="fas fa-info-circle"></i> TATU uchun 182.5 ballingiz yetarli. Barcha fanlardan 90%+ natija ushlab tursangiz, grant imkoniyati yuqori.</p>
+            </div>
+
+            <button class="btn-action" style="margin-top:18px;background:var(--student);" onclick="document.getElementById('otm-modal').style.display='none'">
+                <i class="fas fa-check"></i> Tushundim
+            </button>
+        </div>
+    </div>
+
+    <!-- ====== TELEGRAM TOAST ====== -->
+    <div id="tg-toast">
+        <i class="fab fa-telegram" style="font-size:22px;flex-shrink:0;"></i>
+        <div>
+            <p style="font-size:13px;font-weight:700;">Yuborilmoqda...</p>
+            <p style="font-size:11px;opacity:0.8;">32 nafar ota-onaga hisobot</p>
+        </div>
+        <div id="tg-progress" style="margin-left:auto;font-size:13px;font-weight:700;">0%</div>
+    </div>
+
+    <!-- ====== NAV BAR ====== -->
+    <div id="nav-bar" class="nav-bar">
+        <div class="nav-tab active" id="nav-home" onclick="app.navigate('home')"><i class="fas fa-house"></i><span>Home</span></div>
+        <div class="nav-tab" id="nav-stats" onclick="app.navigate('stats')"><i class="fas fa-chart-pie"></i><span>Stats</span></div>
+        <div class="nav-tab" id="nav-logout" onclick="location.reload()"><i class="fas fa-user"></i><span>Chiqish</span></div>
+    </div>
+
+</div>
+
+<script>
+const app = {
+    role: '',
+
+    init: function(selectedRole) {
+        this.role = selectedRole;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('nav-bar').style.display = 'flex';
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('nav-home').classList.add('active');
+
+        if (selectedRole === 'teacher') {
+            document.getElementById('scr-teacher').classList.add('active');
+            document.getElementById('nav-stats').querySelector('span').innerText = 'Tahlil';
+        } else {
+            document.getElementById('scr-student').classList.add('active');
+            document.getElementById('nav-stats').querySelector('span').innerText = 'Mentor';
+        }
+    },
+
+    navigate: function(dest) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        if (dest === 'home') {
+            document.getElementById('nav-home').classList.add('active');
+            this.init(this.role);
+        } else if (dest === 'stats') {
+            document.getElementById('nav-stats').classList.add('active');
+            if (this.role === 'student') this.openTutor();
+            else this.showDiag();
+        }
+    },
+
+    openScanner: function() {
+        const modal = document.getElementById('scanner-modal');
+        const fill = document.getElementById('scan-prog-fill');
+        const pct = document.getElementById('scan-percent');
+        const status = document.getElementById('scan-status');
+        const cvStatus = document.getElementById('cv-status');
+
+        modal.style.display = 'flex';
+        fill.style.width = '0%';
+        pct.style.display = 'none';
+
+        const messages = [
+            'Varaqani aniqlanmoqda...',
+            'OMR doiralar topilmoqda...',
+            'Javoblar tahlil qilinmoqda...',
+            'Natijalar hisoblanmoqda...',
+            'AI diagnostika...'
+        ];
+        const cvMessages = [
+            'DETECTING CONTOURS...',
+            'IDENTIFYING BUBBLES...',
+            'ANALYZING MARKS...',
+            'CALCULATING SCORES...',
+            'AI PROCESSING COMPLETE'
+        ];
+
+        let progress = 0;
+        pct.style.display = 'block';
+        const interval = setInterval(() => {
+            progress += 2;
+            fill.style.width = progress + '%';
+            pct.innerText = progress + '%';
+            const idx = Math.floor(progress / 20);
+            if (idx < messages.length) {
+                status.innerText = messages[idx];
+                cvStatus.innerText = cvMessages[idx];
+            }
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    document.getElementById('result-modal').style.display = 'flex';
+                }, 400);
+            }
+        }, 60);
+    },
+
+    closeScanner: function() {
+        document.getElementById('scanner-modal').style.display = 'none';
+    },
+
+    saveResult: function() {
+        document.getElementById('result-modal').style.display = 'none';
+        this.showTgToast();
+    },
+
+    sendTg: function() {
+        document.getElementById('result-modal').style.display = 'none';
+        this.showTgToast();
+    },
+
+    showTgToast: function() {
+        const toast = document.getElementById('tg-toast');
+        const prog = document.getElementById('tg-progress');
+        toast.style.display = 'flex';
+        let p = 0;
+        const iv = setInterval(() => {
+            p += 5;
+            prog.innerText = p + '%';
+            if (p >= 100) {
+                clearInterval(iv);
+                prog.innerText = '✓';
+                toast.querySelector('p').innerText = 'Yuborildi!';
+                setTimeout(() => { toast.style.display = 'none'; }, 1500);
+            }
+        }, 80);
+    },
+
+    showDiag: function() {
+        document.getElementById('diag-modal').style.display = 'flex';
+    },
+
+    showOtm: function() {
+        document.getElementById('otm-modal').style.display = 'flex';
+    },
+
+    openTutor: function() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('scr-tutor').classList.add('active');
+        // reset
+        document.querySelectorAll('.option-btn').forEach(b => { b.classList.remove('correct','wrong'); b.disabled = false; });
+        document.getElementById('answer-feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    },
+
+    checkAnswer: function(btn, isCorrect) {
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+        if (isCorrect) {
+            btn.classList.add('correct');
+            document.getElementById('answer-feedback').style.display = 'block';
+        } else {
+            btn.classList.add('wrong');
+            document.querySelectorAll('.option-btn').forEach(b => { if (!b.classList.contains('wrong')) b.classList.add('correct'); });
+            document.getElementById('answer-feedback').style.display = 'block';
+            document.getElementById('answer-feedback').style.background = 'rgba(239,68,68,0.08)';
+            document.getElementById('answer-feedback').style.borderColor = 'rgba(239,68,68,0.2)';
+            document.getElementById('answer-feedback').querySelector('p').style.color = 'var(--danger)';
+            document.getElementById('answer-feedback').querySelector('p').innerHTML = '<i class="fas fa-times-circle"></i> Noto\'g\'ri. To\'g\'ri javob: B) 3 sm';
+        }
+        document.getElementById('next-btn').style.display = 'flex';
+    },
+
+    nextQuestion: function() {
+        this.init(this.role);
+    }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduVision AI Elite - Full System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1; --student: #0ea5e9; --success: #10b981;
+            --warning: #f59e0b; --bg: #020617; --card: #1e293b; --text: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text); overflow: hidden; }
+
+        /* Mobile Container */
+        .phone {
+            width: 375px; height: 812px; background: var(--bg);
+            border-radius: 50px; border: 12px solid #334155;
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.8);
+        }
+
+        /* Screen Management */
+        .screen { position: absolute; inset: 0; display: none; flex-direction: column; padding: 20px; overflow-y: auto; scrollbar-width: none; z-index: 10; }
+        .screen.active { display: flex; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* --- 1. WELCOME SCREEN --- */
+        .intro-content { text-align: center; margin-top: 80px; }
+        .role-selector { margin-top: 60px; }
+        .role-card { 
+            background: var(--card); padding: 25px; border-radius: 28px; margin-bottom: 20px; 
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s;
+            display: flex; align-items: center; gap: 20px;
+        }
+        .role-card:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.1); transform: translateY(-5px); }
+        .role-icon { width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+
+        /* --- 2. TEACHER INTERFACE --- */
+        .t-header { background: linear-gradient(180deg, #1e1b4b 0%, var(--bg) 100%); margin: -20px -20px 20px; padding: 50px 25px 30px; border-radius: 0 0 40px 40px; }
+        .stat-row { display: flex; gap: 12px; margin-bottom: 20px; }
+        .stat-item { background: var(--card); padding: 15px; border-radius: 20px; flex: 1; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* --- 3. STUDENT INTERFACE --- */
+        .s-header { text-align: center; padding: 40px 0; background: radial-gradient(circle at top, rgba(14, 165, 233, 0.2), transparent); }
+        .score-circle { width: 150px; height: 150px; border-radius: 50%; border: 8px solid rgba(14, 165, 233, 0.1); border-top-color: var(--student); margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .score-circle::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 8px solid transparent; border-bottom-color: var(--student); opacity: 0.3; transform: rotate(45deg); }
+
+        /* UI Components */
+        .card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .ai-label { background: linear-gradient(90deg, var(--primary), #a855f7); color: white; padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; display: inline-block; margin-bottom: 10px; text-transform: uppercase; }
+        .btn-action { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 20px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.96); }
+
+        /* --- 4. SCANNER (MODAL) --- */
+        #scanner-modal { position: absolute; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; }
+        .scan-window { flex: 1; border: 2px solid var(--primary); margin: 80px 30px; border-radius: 30px; position: relative; overflow: hidden; box-shadow: 0 0 0 2000px rgba(0,0,0,0.85); }
+        .scan-line { width: 100%; height: 4px; background: var(--primary); position: absolute; top: 0; box-shadow: 0 0 20px var(--primary); animation: scanLoop 2.5s infinite linear; }
+        @keyframes scanLoop { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* Navigation Bar */
+        .nav-bar { position: absolute; bottom: 0; width: 100%; height: 85px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px); display: none; justify-content: space-around; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; z-index: 100; }
+        .nav-tab { color: #64748b; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+        .nav-tab.active { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div class="phone">
+        <div id="scr-intro" class="screen active">
+            <div class="intro-content">
+                <h1 style="font-size: 40px; font-weight: 900; letter-spacing: -1.5px;">Edu<span style="color:var(--primary)">Vision</span></h1>
+                <p style="color: #64748b; margin-top: 10px;">Intellektual ta'lim boshqaruv tizimi</p>
+            </div>
+            <div class="role-selector">
+                <div class="role-card" onclick="app.init('teacher')">
+                    <div class="role-icon" style="background: rgba(99,102,241,0.1); color: var(--primary);"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <div><b>Ustoz Kabineti</b><p style="font-size:11px; color:#64748b;">Skanerlash va Guruh Analitikasi</p></div>
+                </div>
+                <div class="role-card" onclick="app.init('student')">
+                    <div class="role-icon" style="background: rgba(14,165,233,0.1); color: var(--student);"><i class="fas fa-user-graduate"></i></div>
+                    <div><b>O'quvchi Kabineti</b><p style="font-size:11px; color:#64748b;">Natijalar va OTM Bashorati</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scr-teacher" class="screen">
+            <div class="t-header">
+                <h2 style="font-size: 24px;">Sinf Monitoringi</h2>
+                <p style="color: #94a3b8; font-size: 13px;">11-A (Matematika yo'nalishi)</p>
+            </div>
+            
+            <div class="stat-row">
+                <div class="stat-item">
+                    <p style="font-size: 10px; color: #64748b;">KPI</p>
+                    <h3 style="color: var(--success);">+14.5%</h3>
+                </div>
+                <div class="stat-item">
+                    <p style="font-size: 10px; color: #64748b;">FAOL O'QUVCHI</p>
+                    <h3>28/32</h3>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 5px solid var(--primary);">
+                <div class="ai-label">AI Recommendation</div>
+                <p style="font-size: 12px; line-height: 1.6;">Guruhda <b>Logarifmik tenglamalar</b> mavzusida 70% o'quvchi xato qildi. Ushbu darsni takrorlash tavsiya etiladi.</p>
+            </div>
+
+            <button class="btn-action" onclick="app.openScanner()"><i class="fas fa-expand"></i> Yangi Testni Skanerlash</button>
+            <button class="btn-action" style="background: #0088cc; margin-top: 12px;" onclick="alert('Barcha ota-onalarga hisobot yuborildi!')"><i class="fab fa-telegram"></i> Parent-Sync (Ommaviy)</button>
+        </div>
+
+        <div id="scr-student" class="screen">
+            <div class="s-header">
+                <div class="score-circle">
+                    <span style="font-size: 32px; font-weight: 800;">182.5</span>
+                    <span style="font-size: 11px; color: #64748b;">JORIY BALL</span>
+                </div>
+                <p style="margin-top: 15px; font-weight: 700; font-size: 18px;">Avazbek Isoqjonov</p>
+            </div>
+
+            <div class="card">
+                <div class="ai-label">OTM Matcher (AI Prediction)</div>
+                <div style="margin-top: 12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                        <span>TATU (Grant)</span>
+                        <span style="color: var(--success); font-weight: 700;">94%</span>
+                    </div>
+                    <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden;">
+                        <div style="width: 94%; height:100%; background: var(--success);"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                        <span>Inha (Computer Science)</span>
+                        <span style="color: var(--warning); font-weight: 700;">68%</span>
+                    </div>
+                    <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden;">
+                        <div style="width: 68%; height:100%; background: var(--warning);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="background: rgba(245, 158, 11, 0.08); border: 1px dashed var(--warning);">
+                <h4 style="color: var(--warning); font-size: 14px;"><i class="fas fa-brain"></i> AI Mentor</h4>
+                <p style="font-size: 11px; margin-top: 8px; line-height: 1.5; color: #fbbf24;">
+                    Sizda <b>Stereometriya</b> bo'yicha bo'shliq aniqlandi. AI siz uchun 5 daqiqalik dars va 3 ta test generatsiya qildi.
+                </p>
+                <button class="btn-action" style="background: var(--warning); padding: 10px; font-size: 11px; margin-top: 10px; color: #000;">Darsni boshlash</button>
+            </div>
+        </div>
+
+        <div id="scanner-modal">
+            <div class="scan-window">
+                <div class="scan-line"></div>
+                <div style="position:absolute; bottom: 20px; width:100%; text-align:center; color:#fff; font-size:10px; font-family:monospace; letter-spacing: 2px;">CV ENGINE ACTIVE: SCANNING...</div>
+            </div>
+            <div style="padding: 0 30px 50px;">
+                <button class="btn-action" style="background: #ef4444;" onclick="app.closeScanner()">Bekor qilish</button>
+            </div>
+        </div>
+
+        <div id="nav-bar" class="nav-bar">
+            <div class="nav-tab active" onclick="app.navigate('home')"><i class="fas fa-house"></i><span>Home</span></div>
+            <div class="nav-tab" onclick="alert('Tez kunda...')"><i class="fas fa-chart-pie"></i><span>Stats</span></div>
+            <div class="nav-tab" onclick="location.reload()"><i class="fas fa-user"></i><span>Logout</span></div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            role: '',
+
+            init: function(selectedRole) {
+                this.role = selectedRole;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('nav-bar').style.display = 'flex';
+                
+                if(selectedRole === 'teacher') {
+                    document.getElementById('scr-teacher').classList.add('active');
+                } else {
+                    document.getElementById('scr-student').classList.add('active');
+                    // O'quvchida "Stats" menyusi o'rniga "AI Mentor" bo'ladi
+                    document.querySelector('.nav-tab:nth-child(2) span').innerText = "Mentor";
+                }
+            },
+
+            openScanner: function() {
+                document.getElementById('scanner-modal').style.display = 'flex';
+                setTimeout(() => {
+                    alert("OpenCV: 32 nafar o'quvchi testi muvaffaqiyatli o'qildi!\n\nO'rtacha ball: 154.8\nZaif mavzu: Logarifm");
+                    this.closeScanner();
+                }, 3000);
+            },
+
+            closeScanner: function() {
+                document.getElementById('scanner-modal').style.display = 'none';
+            },
+
+            navigate: function(dest) {
+                if(dest === 'home') this.init(this.role);
+            }
+        };
+    </script>
+</body>
+</html>
